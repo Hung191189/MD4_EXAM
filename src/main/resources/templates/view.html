@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+</head>
+<body>
+<div style="display: flex">
+    <div style="width: 70%" id="showAll"></div>
+    <div style="width: 30%" id="rightBar"></div>
+</div>
+
+</body>
+<script>
+const API_STAFF = "http://localhost:8080/api/staffs"
+const API_DEPARTMENT = "http://localhost:8080/api/departments"
+  function addNewStaffForm(){
+    let str = '';
+    axios.get(API_DEPARTMENT).then((res)=>{
+      let data = res.data
+      str += `
+        <h2>Create employee</h2>
+        <h5>Employee Code</h5>
+        <input id="code" placeholder="Enter code">
+        <h5>Name</h5>
+        <input id="name" placeholder="Enter name">
+        <h5>Age</h5>
+        <input id="age" placeholder="Enter age">
+        <h5>Salary</h5>
+        <input id="salary" placeholder="Enter salary">
+        <h5>Department</h5>`
+             str+= `<select id="department">`
+      for (let i = 0; i < data.length; i++) {
+        str +=
+       `
+        <option value="${data[i].id}">${data[i].name}</option>
+        `
+    }
+    str += `</select> <br>`
+      str += `<button><a href="http://localhost:63342/MD4_EXAM/MD4_EXAM.main/templates/view.html?_ijt=ohrk9d6a8sm7bm75e9et16pivm&_ij_reload=RELOAD_ON_SAVE">Cancel</a></button>`
+      str += `<button onclick="saveStaff()">Save</button>`
+      document.getElementById("rightBar").innerHTML = str;
+    })
+
+  }
+function saveStaff(){
+  let data = {
+    staffCode : document.getElementById("code").value,
+    name : document.getElementById("name").value,
+    age : document.getElementById("age").value,
+    salary : document.getElementById("salary").value,
+    department : {
+      id: document.getElementById("department").value
+    }
+  }
+  axios.post(API_STAFF, data).then(()=>{
+    showAllStaff();
+  })
+}
+function showAllStaff(){
+  let str = '';
+  axios.get(API_STAFF).then((res)=>{
+    data = res.data;
+    str += `<button class="btn btn-primary" type="submit" onclick="addNewStaffForm()">ADD NEW EMPLOYEE</button>
+    <button class="btn btn-primary" type="submit" onclick="showByAge()">Sort by age</button>
+  <table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">EmployeeCode</th>
+      <th scope="col">Name</th>
+      <th scope="col">Age</th>
+      <th scope="col">Salary</th>
+      <th scope="col">Department</th>
+      <th scope="col">Action</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>`
+  str += `<tbody>`
+
+    for (let i = 0; i < data.length; i++) {
+        str +=
+            `
+    <tr>
+      <td>${data[i].staffCode}</td>
+      <td onclick="viewStaff(${data[i].id})">${data[i].name}</td>
+      <td>${data[i].age}</td>
+      <td>${data[i].salary}</td>
+      <td onclick="findByDepartment(${data[i].department.id})">${data[i].department.name}</td>
+      <td class="btn btn-outline-primary" onclick="deleteStaff(${data[i].id})">DELETE</td>
+      <td class="btn btn-outline-secondary" onclick="showFormEdit(${data[i].id})">EDIT</td>
+    </tr>
+            `
+    }
+    str +=
+        `
+    </tbody>
+  </table>`
+    document.getElementById("showAll").innerHTML = str;
+  })
+}
+showAllStaff();
+function showFormEdit(id){
+  let str = '';
+  Promise.all([
+          axios.get(API_STAFF + "/" + id),
+          axios.get(API_DEPARTMENT)
+  ])
+  .then((res)=>{
+    let department = res[1].data;
+    let staff = res[0].data;
+    console.log(staff)
+    str += `
+        <h2>Edit employee</h2>
+        <h5>Employee Code</h5>
+        <input id="codeEdit" value="${staff.staffCode}">
+        <h5>Name</h5>
+        <input id="nameEdit" value="${staff.name}">
+        <h5>Age</h5>
+        <input id="ageEdit" value="${staff.age}">
+        <h5>Salary</h5>
+        <input id="salaryEdit" value="${staff.salary}">
+        <h5>Department</h5>`
+    str+= `<select id="departmentEdit">`
+    for (let i = 0; i < department.length; i++) {
+      str +=
+              `
+        <option value="${department[i].id}">${department[i].name}</option>
+        `
+    }
+    str += `</select> <br>`
+      str += `<button><a href="http://localhost:63342/MD4_EXAM/MD4_EXAM.main/templates/view.html?_ijt=ohrk9d6a8sm7bm75e9et16pivm&_ij_reload=RELOAD_ON_SAVE">Cancel</a></button>`
+    str += `<button onclick="saveStaffEdit(${staff.id})">Save</button>`
+    let a = `${staff.id}`
+    console.log(a)
+    document.getElementById("rightBar").innerHTML = str;
+
+  })
+}
+function saveStaffEdit(id){
+  let data = {
+    staffCode : document.getElementById("codeEdit").value,
+    name : document.getElementById("nameEdit").value,
+    age : document.getElementById("ageEdit").value,
+    salary : document.getElementById("salaryEdit").value,
+    department : {
+      id: document.getElementById("departmentEdit").value
+    }
+  }
+  axios.put(API_STAFF + "/" + id, data).then(()=>{
+    showAllStaff();
+  })
+
+}
+function deleteStaff(id){
+    axios.delete(API_STAFF + "/" + id).then(()=>{
+        showAllStaff()
+    })
+}
+function viewStaff(id){
+
+    let str = '';
+    axios.get(API_STAFF + "/" + id).then((res) =>{
+        let data = res.data;
+        str += `
+                <h1>EMPLOYEE DETAIL</h1>
+                <h4>Name: ${data.name}</h4>
+                <h4>Salary ${data.salary}</h4>
+                <h4>Age: ${data.age}</h4>
+                <h4>Department: ${data.department.name}</h4>
+                <a href="http://localhost:63342/MD4_EXAM/MD4_EXAM.main/templates/view.html?_ijt=ohrk9d6a8sm7bm75e9et16pivm&_ij_reload=RELOAD_ON_SAVE">Back to list</a>
+        `
+        document.getElementById("rightBar").innerHTML = str;
+    })
+}
+
+function showByAge(){
+    let str = '';
+    axios.get(API_STAFF).then((res)=>{
+        data = res.data;
+        const compareById = (a, b) => {
+            return -b.age + a.age;
+        }
+        data.sort(compareById)
+        str += `<button class="btn btn-primary" type="submit" onclick="addNewStaffForm()">ADD NEW EMPLOYEE</button>
+    <button class="btn btn-primary" type="submit" onclick="showByAge()">Sort by age</button>
+  <table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">EmployeeCode</th>
+      <th scope="col">Name</th>
+      <th scope="col">Age</th>
+      <th scope="col">Salary</th>
+      <th scope="col">Department</th>
+      <th scope="col">Action</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>`
+        str += `<tbody>`
+
+        for (let i = 0; i < data.length; i++) {
+            str +=
+                `
+    <tr>
+      <td>${data[i].staffCode}</td>
+      <td onclick="viewStaff(${data[i].id})">${data[i].name}</td>
+      <td>${data[i].age}</td>
+      <td>${data[i].salary}</td>
+      <td>${data[i].department.name}</td>
+      <td class="btn btn-outline-primary" onclick="deleteStaff(${data[i].id})">DELETE</td>
+      <td class="btn btn-outline-secondary" onclick="showFormEdit(${data[i].id})">EDIT</td>
+    </tr>
+            `
+        }
+        str +=
+            `
+    </tbody>
+  </table>`
+        document.getElementById("showAll").innerHTML = str;
+    })
+}
+
+function findByDepartment(id){
+    // document.getElementById('rightBar').innerHTML = ''
+    axios.get(API_STAFF + '/DBD/' + id ).then((res) => {
+        let employees = res.data
+        let str =
+            `
+  <table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">EmployeeCode</th>
+      <th scope="col">Name</th>
+      <th scope="col">Age</th>
+      <th scope="col">Salary</th>
+    </tr>
+  </thead>
+  <tbody>
+        `
+        for (let i = 0; i < employees.length; i++) {
+            str +=
+                `
+    <tr>
+      <td>${employees[i].staffCode}</td>
+      <td>${employees[i].name}</td>
+      <td>${employees[i].age}</td>
+      <td>${employees[i].salary}</td>
+    </tr>
+            `
+        }
+        str +=
+            `
+    </tbody>
+  </table>
+        `
+        document.getElementById('rightBar').innerHTML = str;
+
+    })
+}
+</script>
+
+</html>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
