@@ -91,7 +91,7 @@ function showAllStaff(){
       <td>${data[i].age}</td>
       <td>${data[i].salary}</td>
       <td onclick="findByDepartment(${data[i].department.id})">${data[i].department.name}</td>
-      <td class="btn btn-outline-primary" onclick="deleteStaff(${data[i].id})">DELETE</td>
+      <td class="btn btn-outline-primary" onclick="return confirm(deleteStaff(${data[i].id})) ">DELETE</td>
       <td class="btn btn-outline-secondary" onclick="showFormEdit(${data[i].id})">EDIT</td>
     </tr>
             `
